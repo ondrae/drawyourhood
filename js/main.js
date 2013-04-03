@@ -48,6 +48,9 @@ function initialize() {
     selectedShape = null;
   }
 
+  // If they click on the map, clear all selections.
+  google.maps.event.addListener(map, 'click', clearSelection);
+
   // Set current shape as the selected one.
   function setSelection(shape) {
     clearSelection();
@@ -60,9 +63,13 @@ function initialize() {
       var newShape = e.overlay;
       newShape.type = e.type;
       newShape.setEditable(false);
-    });
 
-  drawingManager.addListener(map, 'click', clearSelection);
+      // If they click on the hod the drew, reselect it.
+      google.maps.event.addListener(newShape, 'click', function(){
+        setSelection(this);
+      });
+
+    });
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
