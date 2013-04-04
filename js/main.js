@@ -1,8 +1,6 @@
 // Get map ready to load
 function initialize() {
 
-  var selectedShape;
-  
   // Put the map on the page.
   var mapOptions = {
     center: new google.maps.LatLng(37.7639, -122.446),
@@ -42,6 +40,7 @@ function initialize() {
   drawingManager.setMap(map);
 
   // Clear selection if the user clicks the map, not a hood
+  var selectedShape;
   function clearSelection() {
     if (!selectedShape) return;
     selectedShape.setEditable(false);
@@ -60,11 +59,46 @@ function initialize() {
 
   // When you finish drawing the polygon, deselect it. TODO: Add a id, name to the polygon.
   google.maps.event.addListener(drawingManager, 'overlaycomplete', function(e) {
+
+      // Switch back to pan mode.
+      drawingManager.setDrawingMode(null);
+
       var newShape = e.overlay;
       newShape.type = e.type;
       newShape.setEditable(false);
 
-      // If they click on the hod the drew, reselect it.
+      //Find center of the polygon
+      // http://stackoverflow.com/questions/3081021/how-to-get-the-center-of-a-polygon-in-google-maps-v3
+      google.maps.Polygon.prototype.my_getBounds=function(){
+          var bounds = new google.maps.LatLngBounds()
+          this.getPath().forEach(function(element,index){bounds.extend(element)})
+          return bounds
+      }
+      var someWeirdGoogleObject = newShape.my_getBounds().getCenter();
+      var lat = someWeirdGoogleObject['jb'];
+      var lng = someWeirdGoogleObject['kb'];
+      var myLatlng = new google.maps.LatLng(lat,lng);
+      
+      // Add a name to the hood // Add a save button
+      var content = "Hood Name: <input id=\"hoodName\" type=\"text\"></input>";
+      $('#save').html('<button>Save</button>');
+      $('#save').click(function(){
+        var hoodName = escape(document.getElementById("hoodName").value);
+        infowindow.close();
+        console.log(hoodName);
+        $('#save').css('display:none;');
+      });
+      var infowindow = new google.maps.InfoWindow({
+          content: content
+      });
+      var marker = new google.maps.Marker({
+          position: myLatlng,
+          map: map
+      });
+      marker.setVisible(false);
+      infowindow.open(map,marker);
+
+      // If they click on the hood the drew, reselect it.
       google.maps.event.addListener(newShape, 'click', function(){
         setSelection(this);
       });
