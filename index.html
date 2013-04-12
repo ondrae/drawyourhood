@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,6 +13,8 @@
 	
 	<script src="lib/leaflet/leaflet.js"></script>
 	<script src="lib/leaflet/leaflet.draw.js"></script>
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<!--<script src="http://libs.cartocdn.com/cartodb.js/v2/cartodb.js"></script>-->
 </head>
 <body>
 	<div id="map" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
@@ -22,7 +23,7 @@
 	
 		var mapboxUrl = 'http://{s}.tiles.mapbox.com/v3/codeforamerica.map-lpoosmfm/{z}/{x}/{y}.png',
 			mapbox = new L.TileLayer(mapboxUrl, {maxZoom: 18}),
-			map = new L.Map('map', {layers: [mapbox], center: new L.LatLng(39.12, -94.60), zoom: 13 });
+			map = new L.Map('map', {layers: [mapbox], center: new L.LatLng(39.12, -94.60), zoom: 12 });
 
 		var drawnItems = new L.FeatureGroup();
 		map.addLayer(drawnItems);
@@ -62,6 +63,37 @@
 
 			drawnItems.addLayer(layer);
 		});
+
+		function getExistingHoods(){
+			var user = 'cfa';
+			var query = "SELECT name, ST_AsGeoJSON(the_geom) FROM kc_census_hoods";
+			var url = "http://" + user + ".cartodb.com/api/v1/sql?q=" + query;
+			// console.log(url);
+			// var existingHoods = new L.FeatureGroup();
+
+			$.getJSON(url,function(response) {
+				// console.log(response['rows'][0]);
+				$(response['rows']).each(function(i){
+					
+					var hoodGeoJson = {"type": "Feature"
+						,"properties": {"name":response['rows'][i]['name']
+					    }
+					};
+					hoodGeoJson.geometry = $.parseJSON( response['rows'][i]['st_asgeojson'] );
+					L.geoJson(hoodGeoJson,
+						{"style": {}
+						, onEachFeature: function (feature, layer) {
+					        layer.bindPopup(feature.properties.name);
+						    }
+						}).addTo(map);
+				})
+			});
+
+		}
+
+		getExistingHoods();
+   
+		
 		
 	</script>
 </body>
